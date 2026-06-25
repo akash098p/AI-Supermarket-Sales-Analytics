@@ -1,0 +1,187 @@
+/* =====================================================
+   AI-Powered Supermarket Sales Dashboard
+   assets/styles.css
+   ===================================================== */
+
+:root{
+    --primary:#2563EB;
+    --secondary:#10B981;
+    --danger:#EF4444;
+    --warning:#F59E0B;
+    --bg:#F5F7FB;
+    --card:#FFFFFF;
+    --text:#1F2937;
+    --radius:18px;
+    --shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+.main{
+    background:var(--bg);
+}
+
+.block-container{
+    padding-top:1.5rem;
+    padding-bottom:2rem;
+}
+
+h1,h2,h3{
+    color:var(--text);
+    font-weight:700;
+}
+
+.hero{
+    background:linear-gradient(135deg,#2563EB,#10B981);
+    color:white;
+    padding:22px;
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    margin-bottom:20px;
+}
+
+.kpi-card{
+    background:var(--card);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:var(--shadow);
+    border-left:6px solid var(--primary);
+    transition:.25s ease;
+}
+
+.kpi-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 16px 30px rgba(37,99,235,.18);
+}
+
+.kpi-title{
+    font-size:14px;
+    color:#6B7280;
+    margin-bottom:6px;
+}
+
+.kpi-value{
+    font-size:30px;
+    font-weight:700;
+    color:var(--primary);
+}
+
+.kpi-change-positive{
+    color:#16A34A;
+    font-weight:600;
+}
+
+.kpi-change-negative{
+    color:#DC2626;
+    font-weight:600;
+}
+
+div[data-testid="stSidebar"]{
+    background:linear-gradient(180deg,#1E3A8A,#2563EB);
+}
+
+div[data-testid="stSidebar"] *{
+    color:white;
+}
+
+.stButton>button{
+    width:100%;
+    border-radius:12px;
+    border:none;
+    background:linear-gradient(90deg,#2563EB,#10B981);
+    color:white;
+    font-weight:600;
+    transition:.25s;
+}
+
+.stButton>button:hover{
+    transform:scale(1.02);
+}
+
+.stDownloadButton>button{
+    width:100%;
+    border-radius:12px;
+    font-weight:600;
+}
+
+div[data-testid="metric-container"]{
+    background:white;
+    border-radius:16px;
+    padding:12px;
+    box-shadow:var(--shadow);
+    border-left:5px solid var(--secondary);
+}
+
+div[data-testid="metric-container"]:hover{
+    transform:translateY(-3px);
+    transition:.2s;
+}
+
+[data-testid="stDataFrame"]{
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+}
+
+.chart-card{
+    background:white;
+    border-radius:18px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+}
+
+.insight-card{
+    background:#ECFDF5;
+    border-left:6px solid #10B981;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+
+.warning-card{
+    background:#FEF3C7;
+    border-left:6px solid #F59E0B;
+    padding:15px;
+    border-radius:12px;
+}
+
+.error-card{
+    background:#FEE2E2;
+    border-left:6px solid #EF4444;
+    padding:15px;
+    border-radius:12px;
+}
+
+.success-card{
+    background:#DCFCE7;
+    border-left:6px solid #22C55E;
+    padding:15px;
+    border-radius:12px;
+}
+
+footer{
+    visibility:hidden;
+}
+
+header{
+    background:transparent;
+}
+
+#MainMenu{
+    visibility:hidden;
+}
+
+@media(max-width:768px){
+
+    .hero{
+        padding:15px;
+    }
+
+    .kpi-value{
+        font-size:22px;
+    }
+
+    .block-container{
+        padding-left:1rem;
+        padding-right:1rem;
+    }
+}
