@@ -42,7 +42,7 @@ Supermarket-Sales-Dashboard/
 ## Installation
 
 ``` bash
-git clone https://github.com/<your-username>/Supermarket-Sales-Dashboard.git
+git clone https://github.com/akash098p/AI-Supermarket-Sales-Analytics
 cd Supermarket-Sales-Dashboard
 python -m venv .venv
 
