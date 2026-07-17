@@ -20,7 +20,7 @@
 }
 
 .block-container{
-    padding-top:1.5rem;
+    padding-top:4.5rem;
     padding-bottom:2rem;
 }
 
@@ -36,6 +36,15 @@ h1,h2,h3{
     border-radius:18px;
     box-shadow:var(--shadow);
     margin-bottom:20px;
+}
+
+.hero h1,
+.hero h2,
+.hero h3,
+.hero p,
+.hero span,
+.hero div{
+    color:white !important;
 }
 
 .kpi-card{
@@ -132,6 +141,7 @@ div[data-testid="metric-container"]:hover{
 .insight-card{
     background:#ECFDF5;
     border-left:6px solid #10B981;
+    color:#111827;
     padding:15px;
     border-radius:12px;
     margin-bottom:10px;
@@ -140,6 +150,7 @@ div[data-testid="metric-container"]:hover{
 .warning-card{
     background:#FEF3C7;
     border-left:6px solid #F59E0B;
+    color:#111827;
     padding:15px;
     border-radius:12px;
 }
@@ -147,6 +158,7 @@ div[data-testid="metric-container"]:hover{
 .error-card{
     background:#FEE2E2;
     border-left:6px solid #EF4444;
+    color:#111827;
     padding:15px;
     border-radius:12px;
 }
@@ -154,6 +166,7 @@ div[data-testid="metric-container"]:hover{
 .success-card{
     background:#DCFCE7;
     border-left:6px solid #22C55E;
+    color:#111827;
     padding:15px;
     border-radius:12px;
 }
@@ -181,6 +194,7 @@ header{
     }
 
     .block-container{
+        padding-top:4rem;
         padding-left:1rem;
         padding-right:1rem;
     }
