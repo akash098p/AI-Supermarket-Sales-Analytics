@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/ratings.py
-Customer rating and satisfaction analytics page.
-"""
+
 
 from __future__ import annotations
 

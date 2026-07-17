@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/reports.py
-Operational reporting and data diagnostic page.
-"""
+
 
 from __future__ import annotations
 
