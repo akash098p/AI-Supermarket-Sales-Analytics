@@ -7,7 +7,7 @@ Production-ready data loading utilities.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import csv
 import logging
 
@@ -60,11 +60,17 @@ def load_default_dataset() -> pd.DataFrame:
     return load_file(DEFAULT_DATASET)
 
 @st.cache_data(show_spinner=False)
-def load_uploaded_file(uploaded_file) -> pd.DataFrame:
+def load_uploaded_file(uploaded_file: Any) -> pd.DataFrame:
     suffix = Path(uploaded_file.name).suffix.lower()
+    if suffix not in SUPPORTED_EXTENSIONS:
+        raise ValueError(
+            f"Unsupported file type: {suffix or 'unknown'}. Use one of: {', '.join(sorted(SUPPORTED_EXTENSIONS))}."
+        )
+
+    uploaded_file.seek(0)
     if suffix == ".csv":
         return pd.read_csv(uploaded_file)
-    if suffix in {".xlsx",".xls"}:
+    if suffix in {".xlsx", ".xls"}:
         return pd.read_excel(uploaded_file)
     raise ValueError("Unsupported file type.")
 
@@ -117,10 +123,15 @@ def validate_dataset(df: pd.DataFrame)->List[str]:
         issues.append("Dataset is empty.")
     if len(df.columns)<5:
         issues.append("Very few columns detected.")
+    duplicate_columns = df.columns[df.columns.duplicated()].tolist()
+    if duplicate_columns:
+        issues.append(f"Duplicate column names detected: {', '.join(map(str, duplicate_columns[:5]))}")
+
     m=smart_column_mapping(df)
     for key in ("sales","date","quantity"):
         if m.get(key) is None:
-            issues.append(f"Missing expected column: {key}")
+            aliases = ", ".join(COLUMN_ALIASES[key][:3])
+            issues.append(f"Missing expected {key} column. Example accepted names: {aliases}.")
     return issues
 
 def quality_score(df: pd.DataFrame)->float:
