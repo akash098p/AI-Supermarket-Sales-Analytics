@@ -67,6 +67,7 @@ from utils.config import (
 from utils.data_loader import (
     dataset_profile,
     get_dataset,
+    get_active_dataset_token,
     missing_report,
     preview,
     validate_dataset,
@@ -595,12 +596,14 @@ def _apply_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> pd.DataFrame:
 
 def _initialize_dashboard_state() -> None:
     """Load the base dataset into Streamlit session state when needed."""
-    if "dashboard_data" not in st.session_state:
+    token = get_active_dataset_token()
+    if "dashboard_data" not in st.session_state or st.session_state.get("dashboard_token") != token:
         raw_df = get_dataset()
         prepared_df = preprocess(raw_df)
         st.session_state["dashboard_data"] = prepared_df
-
-    if "dashboard_filtered" not in st.session_state:
+        st.session_state["dashboard_filtered"] = prepared_df.copy()
+        st.session_state["dashboard_token"] = token
+    elif "dashboard_filtered" not in st.session_state:
         st.session_state["dashboard_filtered"] = st.session_state["dashboard_data"].copy()
 
 
@@ -612,15 +615,18 @@ def _load_dataset_from_upload() -> pd.DataFrame:
         prepared_df = preprocess(raw_df)
         st.session_state["dashboard_data"] = prepared_df
         st.session_state["dashboard_filtered"] = prepared_df.copy()
+        st.session_state["dashboard_token"] = get_active_dataset_token()
         return prepared_df
 
-    if "dashboard_data" in st.session_state:
+    token = get_active_dataset_token()
+    if "dashboard_data" in st.session_state and st.session_state.get("dashboard_token") == token:
         return st.session_state["dashboard_data"]
 
     raw_df = get_dataset()
     prepared_df = preprocess(raw_df)
     st.session_state["dashboard_data"] = prepared_df
     st.session_state["dashboard_filtered"] = prepared_df.copy()
+    st.session_state["dashboard_token"] = token
     return prepared_df
 
 
