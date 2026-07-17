@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/customers.py
-Customer segmentation and behavior analytics page.
-"""
+
 
 from __future__ import annotations
 
@@ -332,7 +328,10 @@ def _render_charts(df: pd.DataFrame) -> None:
     with tab_right:
         if "Quantity" in df.columns:
             chart = box(df, "Customer Type", "Quantity", "Quantity Spread by Customer Type") if "Customer Type" in df.columns else None
-            st.plotly_chart(chart, use_container_width=True) if chart is not None else st.info("Box plot unavailable.")
+            if chart is not None:
+                st.plotly_chart(chart, use_container_width=True)
+            else:
+                st.info("Box plot unavailable.")
         else:
             st.info("Box plot unavailable.")
 
