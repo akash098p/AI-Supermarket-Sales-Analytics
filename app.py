@@ -18,32 +18,29 @@ from utils.data_loader import (
 from utils.preprocessing import preprocess
 from utils.analytics import dashboard_summary
 from utils.insights import generate_insights
-from utils.exports import export_dashboard_package
-from utils.config import STYLE_PATH
-
-def load_css():
-    if STYLE_PATH.exists():
-        with open(STYLE_PATH, "r", encoding="utf-8") as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-load_css()
-
-st.set_page_config(
-    page_title="AI-Powered Supermarket Sales Dashboard",
-    page_icon="🛒",
-    layout="wide",
-    initial_sidebar_state="expanded",
+from utils.page_helpers import (
+    configure_page,
+    load_shared_css,
+    render_active_scope,
+    render_export_buttons,
+    render_profile_summary,
+    render_sidebar_uploader,
+    render_validation_issues,
+    stop_for_empty_data,
 )
+
+configure_page("🛒")
+load_shared_css()
 
 st.title("🛒 AI-Powered Supermarket Sales Dashboard")
 st.caption("Interactive Business Intelligence Dashboard")
 
-with st.sidebar:
-    st.header("Dataset")
-    uploaded = st.file_uploader(
-        "Upload CSV / Excel",
-        type=["csv", "xlsx", "xls"]
-    )
+st.sidebar.header("Dataset")
+uploaded = render_sidebar_uploader(
+    "landing_upload",
+    label="Upload CSV / Excel",
+    help_text="Replace the default dataset for the landing dashboard.",
+)
 
 # -------------------------
 # Load & preprocess
@@ -56,15 +53,14 @@ except Exception as e:
     st.stop()
 
 st.session_state["data"] = df
+if df.empty:
+    stop_for_empty_data("The loaded dataset is empty after preprocessing.")
 
 # -------------------------
 # Validation
 # -------------------------
 issues = validate_dataset(df)
-if issues:
-    with st.expander("⚠ Dataset Validation"):
-        for issue in issues:
-            st.warning(issue)
+render_validation_issues(issues)
 
 # -------------------------
 # Sidebar Filters
@@ -113,6 +109,8 @@ st.session_state["filtered_data"] = filtered
 # -------------------------
 summary = dashboard_summary(filtered)
 
+render_active_scope(filtered)
+
 st.subheader("📊 Dashboard KPIs")
 
 c1, c2, c3, c4 = st.columns(4)
@@ -141,7 +139,7 @@ with left:
 
 with right:
     st.subheader("Dataset Profile")
-    st.json(dataset_profile(filtered))
+    render_profile_summary(dataset_profile(filtered))
 
 # -------------------------
 # Missing Report
@@ -165,32 +163,6 @@ for item in generate_insights(filtered):
 st.divider()
 st.subheader("Export")
 
-exports = export_dashboard_package(filtered)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.download_button(
-        "⬇ CSV",
-        exports["csv"],
-        file_name="sales.csv",
-        mime="text/csv"
-    )
-
-with col2:
-    st.download_button(
-        "⬇ Excel",
-        exports["excel"],
-        file_name="sales.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-with col3:
-    st.download_button(
-        "⬇ PDF",
-        exports["pdf"],
-        file_name="dashboard_summary.pdf",
-        mime="application/pdf"
-    )
+render_export_buttons(filtered, "sales", "Export")
 
 st.success("Application loaded successfully.")
