@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/branches.py
-Branch-level performance and profitability analytics page.
-"""
+
 
 from __future__ import annotations
 
