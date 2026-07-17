@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/products.py
-Product analytics and assortment intelligence page.
-"""
+
 
 from __future__ import annotations
 
