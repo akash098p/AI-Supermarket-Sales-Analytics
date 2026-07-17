@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/prediction.py
-Sales forecasting and what-if prediction experience.
-"""
+
 
 from __future__ import annotations
 
@@ -11,42 +7,32 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
-from utils.analytics import dashboard_summary, total_revenue
+from utils.analytics import dashboard_summary
 from utils.charts import actual_vs_predicted, bar
-from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
+from utils.config import PRIMARY, SECONDARY, SUCCESS, WARNING
 from utils.data_loader import get_dataset, validate_dataset
-from utils.exports import export_dashboard_package
 from utils.ml_models import evaluate, prepare_features
+from utils.page_helpers import (
+    configure_page,
+    load_shared_css,
+    render_active_scope,
+    render_export_buttons,
+    render_sidebar_uploader,
+    render_validation_issues,
+    stop_for_empty_data,
+    stop_for_empty_filters,
+)
 from utils.preprocessing import preprocess
-
-
-def load_css() -> None:
-    """Inject the shared dashboard stylesheet."""
-    if STYLE_PATH.exists():
-        with open(STYLE_PATH, "r", encoding="utf-8") as handle:
-            st.markdown(f"<style>{handle.read()}</style>", unsafe_allow_html=True)
 
 
 def _format_currency(value: float) -> str:
     """Format monetary values."""
-    return f"₹{value:,.2f}" if pd.notna(value) else "₹0.00"
-
-
-def _format_number(value: Any) -> str:
-    """Format numeric values for display."""
-    if pd.isna(value):
-        return "0"
-    if isinstance(value, (int, np.integer)):
-        return f"{int(value):,}"
-    if isinstance(value, (float, np.floating)):
-        return f"{value:,.2f}"
-    return str(value)
+    return f"Rs.{value:,.2f}" if pd.notna(value) else "Rs.0.00"
 
 
 def _load_prediction_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -74,30 +60,28 @@ def _load_prediction_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
 def _prepare_prediction_frame(df: pd.DataFrame) -> pd.DataFrame:
     """Ensure the data includes the columns needed by the prediction workflow."""
     prepared = df.copy()
-    if "Total" in prepared.columns:
-        prepared["Total"] = pd.to_numeric(prepared["Total"], errors="coerce")
-    if "Quantity" in prepared.columns:
-        prepared["Quantity"] = pd.to_numeric(prepared["Quantity"], errors="coerce")
-    if "Rating" in prepared.columns:
-        prepared["Rating"] = pd.to_numeric(prepared["Rating"], errors="coerce")
-    if "Branch" not in prepared.columns:
-        prepared["Branch"] = "Unknown"
-    if "City" not in prepared.columns:
-        prepared["City"] = "Unknown"
-    if "Payment" not in prepared.columns:
-        prepared["Payment"] = "Unknown"
-    if "Customer Type" not in prepared.columns:
-        prepared["Customer Type"] = "Unknown"
-    if "Gender" not in prepared.columns:
-        prepared["Gender"] = "Unknown"
-    if "Product Line" not in prepared.columns:
-        prepared["Product Line"] = "Unknown"
+    for numeric_column in ["Total", "Quantity", "Rating"]:
+        if numeric_column in prepared.columns:
+            prepared[numeric_column] = pd.to_numeric(prepared[numeric_column], errors="coerce")
+
+    fallback_columns = {
+        "Branch": "Unknown",
+        "City": "Unknown",
+        "Payment": "Unknown",
+        "Customer Type": "Unknown",
+        "Gender": "Unknown",
+        "Product Line": "Unknown",
+    }
+    for column, fallback in fallback_columns.items():
+        if column not in prepared.columns:
+            prepared[column] = fallback
+
     return prepared
 
 
 def _build_filters(df: pd.DataFrame) -> Dict[str, Any]:
     """Render sidebar filters for the prediction page."""
-    st.sidebar.markdown("## 🧭 Prediction Filters")
+    st.sidebar.markdown("## Prediction Filters")
     filters: Dict[str, Any] = {}
 
     if "Date" in df.columns:
@@ -119,10 +103,10 @@ def _build_filters(df: pd.DataFrame) -> Dict[str, Any]:
             values = sorted(df[column].dropna().astype(str).unique())
             filters[column.lower().replace(" ", "_")] = st.sidebar.multiselect(column, values, default=values)
 
-    st.sidebar.markdown("---")
-    uploaded = st.sidebar.file_uploader("Upload Dataset", type=["csv", "xlsx", "xls"], key="prediction_upload")
-    if uploaded is not None:
-        st.sidebar.success("Dataset updated successfully.")
+    render_sidebar_uploader(
+        "prediction_upload",
+        help_text="Load a new CSV or Excel file for the forecasting page.",
+    )
 
     return filters
 
@@ -136,9 +120,8 @@ def _apply_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> pd.DataFrame:
 
     for column in ["Branch", "City", "Payment", "Customer Type", "Gender", "Product Line"]:
         filter_key = column.lower().replace(" ", "_")
-        if filter_key in filters and column in filtered.columns:
-            if filters[filter_key]:
-                filtered = filtered[filtered[column].astype(str).isin(filters[filter_key])]
+        if filters.get(filter_key) and column in filtered.columns:
+            filtered = filtered[filtered[column].astype(str).isin(filters[filter_key])]
 
     return filtered.reset_index(drop=True)
 
@@ -159,7 +142,7 @@ def _get_default_features(df: pd.DataFrame) -> List[str]:
         "Hour",
         "Weekday",
     ]
-    return [col for col in candidates if col in df.columns]
+    return [column for column in candidates if column in df.columns]
 
 
 def _get_feature_defaults(df: pd.DataFrame, features: List[str]) -> Dict[str, Any]:
@@ -176,21 +159,17 @@ def _get_feature_defaults(df: pd.DataFrame, features: List[str]) -> Dict[str, An
     return defaults
 
 
-def _build_prediction_frame(df: pd.DataFrame, features: List[str], defaults: Dict[str, Any]) -> pd.DataFrame:
+def _build_prediction_frame(features: List[str], defaults: Dict[str, Any]) -> pd.DataFrame:
     """Create a single-row feature frame for prediction."""
-    row: Dict[str, Any] = {}
-    for feature in features:
-        row[feature] = defaults.get(feature)
+    row = {feature: defaults.get(feature) for feature in features}
     frame = pd.DataFrame([row])
-    if "Total" not in frame.columns:
-        frame["Total"] = 0.0
+    frame["Total"] = 0.0
     return frame
 
 
 def _train_model(df: pd.DataFrame, features: List[str], model_name: str) -> Dict[str, Any]:
     """Train a regression model on the filtered dataset."""
-    model_df = df[features + ["Total"]].copy()
-    model_df = model_df.dropna(subset=["Total"]).reset_index(drop=True)
+    model_df = df[features + ["Total"]].copy().dropna(subset=["Total"]).reset_index(drop=True)
     if model_df.empty or len(model_df) < 10:
         raise ValueError("Not enough rows to train a reliable model.")
 
@@ -222,13 +201,17 @@ def _render_hero(df: pd.DataFrame, summary: Dict[str, Any]) -> None:
     left, right = st.columns([2.2, 1.0])
 
     with left:
-        st.markdown("<h1 style='margin-bottom:0.2rem;'>🔮 Demand Forecasting Studio</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size:1.02rem; margin-top:0.25rem; opacity:0.95;'>Train regression models, evaluate forecast quality, and simulate what-if transaction totals using your filtered supermarket data.</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-bottom:0.2rem;'>Demand Forecasting Studio</h1>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='font-size:1.02rem; margin-top:0.25rem; opacity:0.95;'>"
+            "Train regression models, compare forecast quality, and run what-if transaction scenarios from the active filtered dataset.</p>",
+            unsafe_allow_html=True,
+        )
         st.markdown(
             f"<div style='display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.45rem;'>"
-            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>🗓️ {today}</span>"
-            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>📈 {len(df):,} rows</span>"
-            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>💰 {summary['Total Revenue']:.0f} revenue</span>"
+            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>{today}</span>"
+            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>{len(df):,} rows</span>"
+            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>{_format_currency(summary['Total Revenue'])} revenue</span>"
             f"</div>",
             unsafe_allow_html=True,
         )
@@ -246,10 +229,10 @@ def _render_kpi_cards(df: pd.DataFrame) -> None:
     """Render prediction KPI cards."""
     summary = dashboard_summary(df)
     metrics: List[Dict[str, Any]] = [
-        {"title": "Revenue", "value": _format_currency(summary["Total Revenue"]), "icon": "💰", "accent": PRIMARY},
-        {"title": "Orders", "value": f"{summary['Total Orders']:,}", "icon": "🧾", "accent": SECONDARY},
-        {"title": "Avg Order", "value": _format_currency(summary["Average Order Value"]), "icon": "🧮", "accent": SUCCESS},
-        {"title": "Customers", "value": f"{summary['Total Customers']:,}", "icon": "👥", "accent": WARNING},
+        {"title": "Revenue", "value": _format_currency(summary["Total Revenue"]), "accent": PRIMARY},
+        {"title": "Orders", "value": f"{summary['Total Orders']:,}", "accent": SECONDARY},
+        {"title": "Avg Order", "value": _format_currency(summary["Average Order Value"]), "accent": SUCCESS},
+        {"title": "Customers", "value": f"{summary['Total Customers']:,}", "accent": WARNING},
     ]
 
     cols = st.columns(4)
@@ -258,10 +241,8 @@ def _render_kpi_cards(df: pd.DataFrame) -> None:
             st.markdown(
                 f"""
                 <div class="kpi-card" style="border-left:6px solid {metric['accent']}; margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><div class="kpi-title">{metric['title']}</div><div class="kpi-value">{metric['value']}</div></div>
-                        <div style="font-size:1.7rem;">{metric['icon']}</div>
-                    </div>
+                    <div class="kpi-title">{metric['title']}</div>
+                    <div class="kpi-value">{metric['value']}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -270,7 +251,7 @@ def _render_kpi_cards(df: pd.DataFrame) -> None:
 
 def _render_model_panel(df: pd.DataFrame) -> None:
     """Train and evaluate a forecasting model."""
-    st.markdown("### 🧠 Model Training")
+    st.markdown("### Model Training")
     selected_features = st.session_state.get("prediction_features") or _get_default_features(df)
     if not selected_features:
         st.info("No compatible features are available for modeling in the current dataset.")
@@ -291,15 +272,14 @@ def _render_model_panel(df: pd.DataFrame) -> None:
         result = st.session_state["prediction_result"]
         metrics = result["metrics"]
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("R²", metrics["R2"])
+        c1.metric("R2", metrics["R2"])
         c2.metric("MAE", _format_currency(metrics["MAE"]))
         c3.metric("RMSE", _format_currency(metrics["RMSE"]))
         c4.metric("Features", len(result["feature_columns"]))
 
         actual = result["y_test"].to_numpy()
         predicted = result["predictions"]
-        chart = actual_vs_predicted(actual, predicted, "Actual vs Predicted")
-        st.plotly_chart(chart, use_container_width=True)
+        st.plotly_chart(actual_vs_predicted(actual, predicted, "Actual vs Predicted"), use_container_width=True)
 
         if model_name == "Random Forest":
             feature_importance = (
@@ -309,13 +289,12 @@ def _render_model_panel(df: pd.DataFrame) -> None:
             )
             st.markdown("#### Feature Importance")
             st.dataframe(feature_importance, use_container_width=True, hide_index=True)
-            importance_chart = bar(feature_importance, "Feature", "Importance", "Top Feature Importance")
-            st.plotly_chart(importance_chart, use_container_width=True)
+            st.plotly_chart(bar(feature_importance, "Feature", "Importance", "Top Feature Importance"), use_container_width=True)
 
 
 def _render_forecast_form(df: pd.DataFrame) -> None:
     """Capture a what-if scenario and generate a prediction."""
-    st.markdown("### 🎯 What-if Scenario")
+    st.markdown("### What-if Scenario")
     if "prediction_result" not in st.session_state:
         st.info("Train a model first to enable scenario forecasting.")
         return
@@ -335,11 +314,10 @@ def _render_forecast_form(df: pd.DataFrame) -> None:
             values = sorted(df[feature].dropna().astype(str).unique())
             inputs[feature] = form.selectbox(feature, values, index=0 if values else None)
 
-    submitted = form.form_submit_button("Predict")
-    if submitted:
-        prediction_frame = _build_prediction_frame(df, features, inputs)
+    if form.form_submit_button("Predict"):
+        prediction_frame = _build_prediction_frame(features, inputs)
         model = st.session_state["prediction_result"]["model"]
-        X_row, _ = prepare_features(prediction_frame.assign(Total=0.0), target="Total")
+        X_row, _ = prepare_features(prediction_frame, target="Total")
         prediction = float(model.predict(X_row)[0])
         st.success(f"Estimated transaction total: {_format_currency(prediction)}")
         st.caption("This forecast uses the trained model and the values from the scenario form.")
@@ -347,7 +325,7 @@ def _render_forecast_form(df: pd.DataFrame) -> None:
 
 def _render_insights(df: pd.DataFrame) -> None:
     """Render insight cards for actionability."""
-    st.markdown("### 🧩 Forecast Insights")
+    st.markdown("### Forecast Insights")
     summary = dashboard_summary(df)
     cards = [
         f"The current selection contains {summary['Total Orders']:,} transactions with an average order value of {_format_currency(summary['Average Order Value'])}.",
@@ -360,45 +338,32 @@ def _render_insights(df: pd.DataFrame) -> None:
 
 def _render_exports(df: pd.DataFrame) -> None:
     """Render export actions for the prediction view."""
-    st.markdown("### ⬇️ Export Forecast View")
-    exports = export_dashboard_package(df)
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.download_button("Download CSV", exports["csv"], file_name="prediction_view.csv", mime="text/csv")
-    with c2:
-        st.download_button("Download Excel", exports["excel"], file_name="prediction_view.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    with c3:
-        st.download_button("Download PDF", exports["pdf"], file_name="prediction_view_summary.pdf", mime="application/pdf")
+    render_export_buttons(df, "prediction_view", "Export Forecast View")
 
 
 def render_prediction_page() -> None:
     """Render the complete prediction analytics experience."""
-    st.set_page_config(page_title=APP_NAME, page_icon="🔮", layout="wide", initial_sidebar_state="expanded")
-    load_css()
+    configure_page("🔮")
+    load_shared_css()
 
-    data, filtered_data = _load_prediction_data()
+    data, _ = _load_prediction_data()
     if data.empty:
-        st.error("The active dataset is empty.")
-        st.stop()
+        stop_for_empty_data("The active dataset is empty.")
 
-    issues = validate_dataset(data)
-    if issues:
-        with st.expander("⚠ Dataset Validation"):
-            for issue in issues:
-                st.warning(issue)
+    render_validation_issues(validate_dataset(data))
 
     filters = _build_filters(data)
     filtered_data = _apply_filters(data, filters)
     st.session_state["prediction_filtered"] = filtered_data
 
     if filtered_data.empty:
-        st.warning("No rows match the selected filters. Please broaden the selection.")
-        st.stop()
+        stop_for_empty_filters()
 
     prepared_df = _prepare_prediction_frame(filtered_data)
     summary = dashboard_summary(prepared_df)
 
     with st.spinner("Preparing forecast workspace..."):
+        render_active_scope(prepared_df)
         _render_hero(prepared_df, summary)
         st.markdown("---")
         _render_kpi_cards(prepared_df)
