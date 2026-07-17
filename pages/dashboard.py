@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/dashboard.py
-Executive landing page for the Streamlit BI experience.
-"""
+
 
 from __future__ import annotations
 
@@ -77,6 +73,7 @@ from utils.data_loader import (
 )
 from utils.exports import export_dashboard_package
 from utils.insights import generate_insights
+from utils.page_helpers import render_profile_summary
 from utils.preprocessing import preprocess
 
 
@@ -195,7 +192,7 @@ def _render_dataset_overview(df: pd.DataFrame) -> None:
 
     with right:
         st.markdown("#### Dataset Profile")
-        st.json(profile)
+        render_profile_summary(profile)
         st.caption("Quality and reliability snapshot for the active filtered view")
 
     st.markdown("#### Missing Values")
