@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/finance.py
-Financial performance and profitability analysis page.
-"""
+
 
 from __future__ import annotations
 
