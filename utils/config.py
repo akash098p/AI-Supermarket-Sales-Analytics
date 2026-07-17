@@ -26,7 +26,7 @@ ASSETS_DIR = BASE_DIR / "assets"
 REPORTS_DIR = BASE_DIR / "reports"
 MODELS_DIR = BASE_DIR / "models"
 
-DEFAULT_DATASET = DATA_DIR / "indian_supermarket_sales_10000.csv"
+DEFAULT_DATASET = DATA_DIR / "supermarket_sales.csv"
 LOGO_PATH = ASSETS_DIR / "logo.png"
 STYLE_PATH = ASSETS_DIR / "styles.css"
 
