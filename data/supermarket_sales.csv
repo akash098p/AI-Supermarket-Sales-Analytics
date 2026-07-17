@@ -4,8 +4,8 @@ INV00002024,CUST1143,Neha Verma,Delhi NCR,New Delhi,Delhi,Member,Male,HUL,Red La
 INV00002025,CUST1624,Rohan Singh,Kolkata Central,Kolkata,West Bengal,Wholesale,Female,Unilever,Dove Soap,Personal Care,694.49,7,10,486.14,218.76,4594.05,2022-03-17,08:25,Wallet,4861.43,4.7619,218.76,6.6,Akash Mukherjee,420
 INV00002026,CUST2321,Aditya Ghosh,Bengaluru,Bengaluru,Karnataka,Regular,Male,Cadbury,Dairy Milk,Confectionery,631.92,8,15,758.3,214.85,4511.91,2022-03-07,13:21,Wallet,5055.36,4.7619,214.85,5.9,Saanvi Nair,336
 INV00002027,CUST2286,Rahul Singh,Bengaluru,Bengaluru,Karnataka,Wholesale,Male,Adani Wilmar,Fortune Sunflower Oil,Grocery,474.37,8,10,379.5,170.77,3586.23,2022-06-30,18:18,Debit Card,3794.96,4.7619,170.77,3.6,Rahul Sharma,207
-INV00002028,CUST1775,Aarav Patel,Mumbai,Mumbai,Maharashtra,Member,Male,Coca-Cola,Coca-Cola,Beverages,1177.1,8,5,470.84,447.3,9393.26,2024-06-29,12:51,Credit Card,9416.8,4.7619,447.3,9.9,Neha Sharma,233
-INV00002029,CUST2448,Pooja Sharma,Pune,Pune,Maharashtra,Wholesale,Female,HUL,Surf Excel,Home Care,15.42,7,20,21.59,4.32,90.67,2023-12-29,09:34,Debit Card,107.94,4.7619,4.32,3.9,Aditya Verma,407
+INV00002028,CUST1150,Priya Sharma,Mumbai,Mumbai,Maharashtra,Regular,Female,Colgate,Colgate Toothpaste,Personal Care,134.46,3,20,80.68,16.14,338.84,2022-09-06,09:39,Credit Card,403.38,4.7619,16.14,4.2,Rahul Sharma,66
+INV00002029,CUST2448,Pooja Roy,Pune,Pune,Maharashtra,Wholesale,Female,HUL,Surf Excel,Home Care,15.42,7,20,21.59,4.32,90.67,2023-12-29,09:34,Debit Card,107.94,4.7619,4.32,3.9,Aditya Verma,407
 INV00002030,CUST1848,Saanvi Pramanik,Kolkata Central,Kolkata,West Bengal,Wholesale,Male,Unilever,Lux Soap,Personal Care,1147.58,5,0,0.0,286.89,6024.79,2023-11-17,13:42,Cash,5737.9,4.7619,286.89,8.4,Rahul Sharma,32
 INV00002031,CUST2343,Sneha Roy,Howrah,Howrah,West Bengal,Wholesale,Female,India Gate,Basmati Rice,Grocery,913.3,1,15,137.0,38.81,815.11,2022-10-27,16:07,Cash,913.3,4.7619,38.81,7.0,Riya Jain,64
 INV00002032,CUST1715,Neha Das,Ahmedabad,Ahmedabad,Gujarat,Member,Male,Unilever,Clinic Plus Shampoo,Personal Care,88.54,7,5,30.99,29.44,618.23,2022-02-12,16:20,Wallet,619.78,4.7619,29.44,6.5,Neha Gupta,219
@@ -30,7 +30,7 @@ INV00002050,CUST1707,Vivaan Sharma,Delhi NCR,New Delhi,Delhi,Member,Male,Cadbury
 INV00002051,CUST1861,Rahul Reddy,Mumbai,Mumbai,Maharashtra,Regular,Male,Amul,Amul Milk,Dairy,945.21,1,20,189.04,37.81,793.98,2023-06-24,17:18,Credit Card,945.21,4.7619,37.81,9.3,Ishita Roy,66
 INV00002052,CUST1163,Saanvi Yadav,Delhi NCR,New Delhi,Delhi,Regular,Male,HUL,Red Label Tea,Beverages,963.56,1,20,192.71,38.54,809.39,2023-08-26,19:38,Wallet,963.56,4.7619,38.54,8.4,Sneha Nair,166
 INV00002053,CUST1580,Saanvi Pramanik,Mumbai,Mumbai,Maharashtra,Regular,Male,Unilever,Clinic Plus Shampoo,Personal Care,242.14,2,10,48.43,21.79,457.64,2024-09-11,20:58,Cash,484.28,4.7619,21.79,6.3,Ishita Mukherjee,13
-INV00002054,CUST1150,Priya Roy,Mumbai,Mumbai,Maharashtra,Regular,Female,Colgate,Colgate Toothpaste,Personal Care,134.46,3,20,80.68,16.14,338.84,2022-09-06,09:39,Credit Card,403.38,4.7619,16.14,4.2,Rahul Sharma,66
+INV00002054,CUST1775,Aarav Patel,Mumbai,Mumbai,Maharashtra,Member,Male,Coca-Cola,Coca-Cola,Beverages,1177.1,8,5,470.84,447.3,9393.26,2024-06-29,12:51,Credit Card,9416.8,4.7619,447.3,9.9,Neha Sharma,233
 INV00002055,CUST1587,Diya Sharma,Hyderabad,Hyderabad,Telangana,Member,Male,Coca-Cola,Coca-Cola,Beverages,804.48,2,0,0.0,80.45,1689.41,2023-11-07,22:49,Debit Card,1608.96,4.7619,80.45,9.8,Riya Ghosh,47
 INV00002056,CUST1429,Pooja Patel,Bengaluru,Bengaluru,Karnataka,Member,Male,Colgate,Colgate Toothpaste,Personal Care,987.03,3,5,148.05,140.65,2953.69,2024-04-30,16:17,Debit Card,2961.09,4.7619,140.65,6.0,Diya Sharma,411
 INV00002057,CUST2165,Meera Sharma,Salt Lake,Kolkata,West Bengal,Wholesale,Male,Cadbury,Bournvita,Health,996.26,7,0,0.0,348.69,7322.51,2022-09-07,22:19,Credit Card,6973.82,4.7619,348.69,9.2,Sneha Das,326
