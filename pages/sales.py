@@ -1,8 +1,4 @@
-"""
-AI-Powered Supermarket Sales Analytics Dashboard
-pages/sales.py
-Sales performance analytics page.
-"""
+
 
 from __future__ import annotations
 
@@ -14,49 +10,26 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from utils.analytics import (
-    average_order_value,
-    average_rating,
-    dashboard_summary,
-    gross_income,
-    highest_sales_branch,
-    monthly_sales,
-    total_orders,
-    total_products_sold,
-    total_revenue,
-    weekday_sales,
-)
-from utils.charts import area, bar, line
-from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
+from utils.analytics import dashboard_summary
+from utils.charts import bar, line
+from utils.config import PRIMARY, SECONDARY, SUCCESS, WARNING
 from utils.data_loader import get_dataset, validate_dataset
-from utils.exports import export_dashboard_package
+from utils.page_helpers import (
+    configure_page,
+    load_shared_css,
+    render_active_scope,
+    render_export_buttons,
+    render_sidebar_uploader,
+    render_validation_issues,
+    stop_for_empty_data,
+    stop_for_empty_filters,
+)
 from utils.preprocessing import preprocess
-
-
-def load_css() -> None:
-    """Inject the shared dashboard stylesheet."""
-    if STYLE_PATH.exists():
-        with open(STYLE_PATH, "r", encoding="utf-8") as handle:
-            st.markdown(
-                f"<style>{handle.read()}</style>",
-                unsafe_allow_html=True,
-            )
 
 
 def _format_currency(value: float) -> str:
     """Format numeric values as currency."""
-    return f"₹{value:,.2f}" if pd.notna(value) else "₹0.00"
-
-
-def _format_number(value: Any) -> str:
-    """Format numbers for display."""
-    if pd.isna(value):
-        return "0"
-    if isinstance(value, (int, np.integer)):
-        return f"{int(value):,}"
-    if isinstance(value, (float, np.floating)):
-        return f"{value:,.2f}"
-    return str(value)
+    return f"Rs.{value:,.2f}" if pd.notna(value) else "Rs.0.00"
 
 
 def _load_sales_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -106,7 +79,7 @@ def _prepare_sales_frame(df: pd.DataFrame) -> pd.DataFrame:
 
 def _build_filters(df: pd.DataFrame) -> Dict[str, Any]:
     """Render sidebar filters and return the active selection state."""
-    st.sidebar.markdown("## 🧭 Sales Filters")
+    st.sidebar.markdown("## Sales Filters")
     filters: Dict[str, Any] = {}
 
     if "Date" in df.columns:
@@ -125,31 +98,16 @@ def _build_filters(df: pd.DataFrame) -> Dict[str, Any]:
 
     if "Branch" in df.columns:
         branches = sorted(df["Branch"].dropna().astype(str).unique())
-        filters["branch"] = st.sidebar.multiselect(
-            "Branch",
-            branches,
-            default=branches,
-            help="Filter by branch",
-        )
+        filters["branch"] = st.sidebar.multiselect("Branch", branches, default=branches, help="Filter by branch")
 
     if "City" in df.columns:
         cities = sorted(df["City"].dropna().astype(str).unique())
-        filters["city"] = st.sidebar.multiselect(
-            "City",
-            cities,
-            default=cities,
-            help="Filter by city",
-        )
+        filters["city"] = st.sidebar.multiselect("City", cities, default=cities, help="Filter by city")
 
     product_col = "Product" if "Product" in df.columns else "Product Line"
     if product_col in df.columns:
         products = sorted(df[product_col].dropna().astype(str).unique())
-        filters["product"] = st.sidebar.multiselect(
-            product_col,
-            products,
-            default=products,
-            help="Filter by product",
-        )
+        filters["product"] = st.sidebar.multiselect(product_col, products, default=products, help="Filter by product")
 
     if "Customer Type" in df.columns:
         customer_types = sorted(df["Customer Type"].dropna().astype(str).unique())
@@ -162,21 +120,11 @@ def _build_filters(df: pd.DataFrame) -> Dict[str, Any]:
 
     if "Payment" in df.columns:
         payments = sorted(df["Payment"].dropna().astype(str).unique())
-        filters["payment"] = st.sidebar.multiselect(
-            "Payment",
-            payments,
-            default=payments,
-            help="Filter by payment method",
-        )
+        filters["payment"] = st.sidebar.multiselect("Payment", payments, default=payments, help="Filter by payment method")
 
     if "Gender" in df.columns:
         genders = sorted(df["Gender"].dropna().astype(str).unique())
-        filters["gender"] = st.sidebar.multiselect(
-            "Gender",
-            genders,
-            default=genders,
-            help="Filter by customer gender",
-        )
+        filters["gender"] = st.sidebar.multiselect("Gender", genders, default=genders, help="Filter by gender")
 
     if "Rating" in df.columns:
         rating_min, rating_max = float(df["Rating"].min()), float(df["Rating"].max())
@@ -198,15 +146,10 @@ def _build_filters(df: pd.DataFrame) -> Dict[str, Any]:
             step=1,
         )
 
-    st.sidebar.markdown("---")
-    uploaded = st.sidebar.file_uploader(
-        "Upload Dataset",
-        type=["csv", "xlsx", "xls"],
-        key="sales_upload",
-        help="Load a new CSV or Excel file for analysis.",
+    render_sidebar_uploader(
+        "sales_upload",
+        help_text="Load a new CSV or Excel file for the sales analytics page.",
     )
-    if uploaded is not None:
-        st.sidebar.success("Dataset updated successfully.")
 
     return filters
 
@@ -218,30 +161,24 @@ def _apply_filters(df: pd.DataFrame, filters: Dict[str, Any]) -> pd.DataFrame:
     if "date_start" in filters and "date_end" in filters and "Date" in filtered.columns:
         filtered = filtered[(filtered["Date"] >= filters["date_start"]) & (filtered["Date"] <= filters["date_end"])]
 
-    if "branch" in filters and "Branch" in filtered.columns:
-        if filters["branch"]:
-            filtered = filtered[filtered["Branch"].astype(str).isin(filters["branch"])]
+    if filters.get("branch") and "Branch" in filtered.columns:
+        filtered = filtered[filtered["Branch"].astype(str).isin(filters["branch"])]
 
-    if "city" in filters and "City" in filtered.columns:
-        if filters["city"]:
-            filtered = filtered[filtered["City"].astype(str).isin(filters["city"])]
+    if filters.get("city") and "City" in filtered.columns:
+        filtered = filtered[filtered["City"].astype(str).isin(filters["city"])]
 
     product_col = "Product" if "Product" in filtered.columns else "Product Line"
-    if "product" in filters and product_col in filtered.columns:
-        if filters["product"]:
-            filtered = filtered[filtered[product_col].astype(str).isin(filters["product"])]
+    if filters.get("product") and product_col in filtered.columns:
+        filtered = filtered[filtered[product_col].astype(str).isin(filters["product"])]
 
-    if "customer_type" in filters and "Customer Type" in filtered.columns:
-        if filters["customer_type"]:
-            filtered = filtered[filtered["Customer Type"].astype(str).isin(filters["customer_type"])]
+    if filters.get("customer_type") and "Customer Type" in filtered.columns:
+        filtered = filtered[filtered["Customer Type"].astype(str).isin(filters["customer_type"])]
 
-    if "payment" in filters and "Payment" in filtered.columns:
-        if filters["payment"]:
-            filtered = filtered[filtered["Payment"].astype(str).isin(filters["payment"])]
+    if filters.get("payment") and "Payment" in filtered.columns:
+        filtered = filtered[filtered["Payment"].astype(str).isin(filters["payment"])]
 
-    if "gender" in filters and "Gender" in filtered.columns:
-        if filters["gender"]:
-            filtered = filtered[filtered["Gender"].astype(str).isin(filters["gender"])]
+    if filters.get("gender") and "Gender" in filtered.columns:
+        filtered = filtered[filtered["Gender"].astype(str).isin(filters["gender"])]
 
     if "rating" in filters and "Rating" in filtered.columns:
         low, high = filters["rating"]
@@ -263,20 +200,17 @@ def _render_hero(df: pd.DataFrame) -> None:
     left, right = st.columns([2.2, 1.0])
 
     with left:
-        st.markdown(
-            "<h1 style='margin-bottom:0.2rem;'>📈 Sales Performance Intelligence</h1>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("<h1 style='margin-bottom:0.2rem;'>Sales Performance Intelligence</h1>", unsafe_allow_html=True)
         st.markdown(
             "<p style='font-size:1.02rem; margin-top:0.25rem; opacity:0.95;'>"
-            "A detailed view of sales cadence, revenue momentum, seasonality, and forecast direction.</p>",
+            "Track sales cadence, revenue momentum, seasonality, and trend direction from one filtered workspace.</p>",
             unsafe_allow_html=True,
         )
         st.markdown(
             f"<div style='display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.45rem;'>"
-            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>🗓️ {today}</span>"
-            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>📦 {len(df):,} transactions</span>"
-            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>🏬 {summary['Best Branch']}</span>"
+            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>{today}</span>"
+            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>{len(df):,} transactions</span>"
+            f"<span style='background:rgba(255,255,255,0.18); padding:0.35rem 0.7rem; border-radius:999px;'>{summary['Best Branch']}</span>"
             f"</div>",
             unsafe_allow_html=True,
         )
@@ -294,12 +228,12 @@ def _render_kpi_cards(df: pd.DataFrame) -> None:
     """Render the executive KPI cards for sales performance."""
     summary = dashboard_summary(df)
     metrics: List[Dict[str, Any]] = [
-        {"title": "Revenue", "value": _format_currency(summary["Total Revenue"]), "icon": "💰", "accent": PRIMARY},
-        {"title": "Orders", "value": f"{summary['Total Orders']:,}", "icon": "🧾", "accent": SECONDARY},
-        {"title": "Products Sold", "value": f"{summary['Products Sold']:,}", "icon": "📦", "accent": SUCCESS},
-        {"title": "Gross Income", "value": _format_currency(summary["Gross Income"]), "icon": "📈", "accent": WARNING},
-        {"title": "Average Order", "value": _format_currency(summary["Average Order Value"]), "icon": "🧮", "accent": PRIMARY},
-        {"title": "Average Rating", "value": f"{summary['Average Rating']:.1f}/10", "icon": "⭐", "accent": SECONDARY},
+        {"title": "Revenue", "value": _format_currency(summary["Total Revenue"]), "accent": PRIMARY},
+        {"title": "Orders", "value": f"{summary['Total Orders']:,}", "accent": SECONDARY},
+        {"title": "Products Sold", "value": f"{summary['Products Sold']:,}", "accent": SUCCESS},
+        {"title": "Gross Income", "value": _format_currency(summary["Gross Income"]), "accent": WARNING},
+        {"title": "Average Order", "value": _format_currency(summary["Average Order Value"]), "accent": PRIMARY},
+        {"title": "Average Rating", "value": f"{summary['Average Rating']:.1f}/10", "accent": SECONDARY},
     ]
 
     cols = st.columns(3)
@@ -308,10 +242,8 @@ def _render_kpi_cards(df: pd.DataFrame) -> None:
             st.markdown(
                 f"""
                 <div class="kpi-card" style="border-left:6px solid {metric['accent']}; margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><div class="kpi-title">{metric['title']}</div><div class="kpi-value">{metric['value']}</div></div>
-                        <div style="font-size:1.7rem;">{metric['icon']}</div>
-                    </div>
+                    <div class="kpi-title">{metric['title']}</div>
+                    <div class="kpi-value">{metric['value']}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -329,16 +261,14 @@ def _build_timeseries_frames(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
             .sum()
         )
         monthly["Month_Key"] = monthly["Month_Key"].astype(str)
-        monthly = monthly.sort_values("Month_Key").reset_index(drop=True)
-        frames["monthly"] = monthly
+        frames["monthly"] = monthly.sort_values("Month_Key").reset_index(drop=True)
 
-        daily = (
+        frames["daily"] = (
             df.groupby("Date", as_index=False)["Total"]
             .sum()
             .sort_values("Date")
             .reset_index(drop=True)
         )
-        frames["daily"] = daily
 
         weekly = (
             df.assign(Weekday=df["Date"].dt.day_name())
@@ -346,13 +276,11 @@ def _build_timeseries_frames(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
             .sum()
         )
         weekday_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        weekly = weekly.set_index("Weekday").reindex(weekday_order).reset_index().rename(columns={"index": "Weekday"})
-        weekly = weekly.dropna(subset=["Total"]).reset_index(drop=True)
-        frames["weekly"] = weekly
+        weekly = weekly.set_index("Weekday").reindex(weekday_order).reset_index()
+        frames["weekly"] = weekly.dropna(subset=["Total"]).reset_index(drop=True)
 
         if "Hour" in df.columns:
-            hourly = df.groupby("Hour", as_index=False)["Total"].sum().sort_values("Hour")
-            frames["hourly"] = hourly
+            frames["hourly"] = df.groupby("Hour", as_index=False)["Total"].sum().sort_values("Hour")
         else:
             frames["hourly"] = pd.DataFrame(columns=["Hour", "Total"])
     else:
@@ -368,50 +296,45 @@ def _render_trend_overview(df: pd.DataFrame) -> None:
     """Render the overview charts for monthly, weekly, and daily trend analysis."""
     frames = _build_timeseries_frames(df)
 
-    st.markdown("### 📊 Sales Trend Overview")
+    st.markdown("### Sales Trend Overview")
     top_left, top_right = st.columns(2)
 
     with top_left:
         if not frames["monthly"].empty:
-            chart = line(frames["monthly"], "Month_Key", "Total", "Monthly Sales")
-            st.plotly_chart(chart, use_container_width=True)
+            st.plotly_chart(line(frames["monthly"], "Month_Key", "Total", "Monthly Sales"), use_container_width=True)
         else:
             st.info("Monthly sales trend is unavailable for the current dataset.")
 
     with top_right:
         if not frames["weekly"].empty:
-            chart = bar(frames["weekly"], "Weekday", "Total", "Revenue by Weekday")
-            st.plotly_chart(chart, use_container_width=True)
+            st.plotly_chart(bar(frames["weekly"], "Weekday", "Total", "Revenue by Weekday"), use_container_width=True)
         else:
             st.info("Weekly revenue trend is unavailable.")
 
     lower_left, lower_right = st.columns(2)
     with lower_left:
         if not frames["daily"].empty:
-            chart = line(frames["daily"], "Date", "Total", "Daily Sales")
-            st.plotly_chart(chart, use_container_width=True)
+            st.plotly_chart(line(frames["daily"], "Date", "Total", "Daily Sales"), use_container_width=True)
         else:
             st.info("Daily sales trend is unavailable.")
 
     with lower_right:
         if not frames["hourly"].empty:
-            chart = bar(frames["hourly"], "Hour", "Total", "Hourly Sales Volume")
-            st.plotly_chart(chart, use_container_width=True)
+            st.plotly_chart(bar(frames["hourly"], "Hour", "Total", "Hourly Sales Volume"), use_container_width=True)
         else:
             st.info("Hourly sales analysis is unavailable.")
 
 
 def _render_moving_analytics(df: pd.DataFrame) -> None:
-    """Render rolling average, moving average, growth, and forecast charts."""
+    """Render rolling average, growth, and simple forecast charts."""
     frames = _build_timeseries_frames(df)
-    st.markdown("### 🔄 Momentum & Forecast")
+    st.markdown("### Momentum and Forecast")
 
     left, right = st.columns(2)
 
     with left:
         if not frames["daily"].empty:
-            daily = frames["daily"].copy()
-            daily = daily.set_index("Date")
+            daily = frames["daily"].copy().set_index("Date")
             daily["Rolling Average"] = daily["Total"].rolling(window=7, min_periods=1).mean()
             daily = daily.reset_index()
             fig = go.Figure()
@@ -424,8 +347,7 @@ def _render_moving_analytics(df: pd.DataFrame) -> None:
 
     with right:
         if not frames["daily"].empty:
-            daily = frames["daily"].copy()
-            daily = daily.set_index("Date")
+            daily = frames["daily"].copy().set_index("Date")
             daily["Moving Average"] = daily["Total"].rolling(window=30, min_periods=1).mean()
             daily = daily.reset_index()
             fig = go.Figure()
@@ -455,10 +377,15 @@ def _render_moving_analytics(df: pd.DataFrame) -> None:
                 df.assign(Month=df["Date"].dt.month_name(), Weekday=df["Date"].dt.day_name())
                 .pivot_table(index="Weekday", columns="Month", values="Total", aggfunc="sum", fill_value=0)
             )
-            ordered_months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+            ordered_months = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December",
+            ]
             ordered_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             seasonality = seasonality.reindex(index=ordered_weekdays, columns=ordered_months, fill_value=0)
-            fig = go.Figure(data=go.Heatmap(z=seasonality.values, x=seasonality.columns, y=seasonality.index, colorscale="Viridis"))
+            fig = go.Figure(
+                data=go.Heatmap(z=seasonality.values, x=seasonality.columns, y=seasonality.index, colorscale="Viridis")
+            )
             fig.update_layout(title="Seasonality Heatmap", template="plotly_white")
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -472,9 +399,10 @@ def _render_moving_analytics(df: pd.DataFrame) -> None:
             slope, intercept = np.polyfit(x, y, 1)
             forecast_x = np.arange(len(monthly) + 3)
             forecast_y = slope * forecast_x + intercept
+            labels = [*monthly["Month_Key"], *[f"Forecast {i}" for i in range(1, 4)]]
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=monthly["Month_Key"], y=monthly["Total"], mode="lines+markers", name="Observed"))
-            fig.add_trace(go.Scatter(x=[*monthly["Month_Key"], *[f"Forecast {i}" for i in range(1, 4)]], y=[*monthly["Total"], *forecast_y[len(monthly):]], mode="lines+markers", name="Forecast"))
+            fig.add_trace(go.Scatter(x=labels, y=[*monthly["Total"], *forecast_y[len(monthly):]], mode="lines+markers", name="Forecast"))
             fig.update_layout(title="Forecast Trend", template="plotly_white", hovermode="x unified")
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -483,12 +411,12 @@ def _render_moving_analytics(df: pd.DataFrame) -> None:
 
 def _render_insights(df: pd.DataFrame) -> None:
     """Render sales insights and a compact summary table."""
-    st.markdown("### 🧠 Sales Insights")
+    st.markdown("### Sales Insights")
     summary = dashboard_summary(df)
     frames = _build_timeseries_frames(df)
 
     insight_cards = [
-        f"Revenue is concentrated around {summary['Best Branch']} with an average basket value of { _format_currency(summary['Average Order Value']) }.",
+        f"Revenue is currently led by {summary['Best Branch']} with an average basket value of {_format_currency(summary['Average Order Value'])}.",
         f"The current filter returns {summary['Total Orders']:,} transactions and {summary['Products Sold']:,} units sold.",
         f"Customer sentiment remains healthy, with an average rating of {summary['Average Rating']:.1f}/10.",
     ]
@@ -503,43 +431,30 @@ def _render_insights(df: pd.DataFrame) -> None:
 
 def _render_exports(df: pd.DataFrame) -> None:
     """Render export buttons for CSV, Excel, and PDF."""
-    st.markdown("### ⬇️ Export Sales View")
-    exports = export_dashboard_package(df)
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-        st.download_button("Download CSV", exports["csv"], file_name="sales_view.csv", mime="text/csv")
-    with c2:
-        st.download_button("Download Excel", exports["excel"], file_name="sales_view.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    with c3:
-        st.download_button("Download PDF", exports["pdf"], file_name="sales_view_summary.pdf", mime="application/pdf")
+    render_export_buttons(df, "sales_view", "Export Sales View")
 
 
 def render_sales_page() -> None:
     """Render the complete sales analytics experience."""
-    st.set_page_config(page_title=APP_NAME, page_icon="📈", layout="wide", initial_sidebar_state="expanded")
-    load_css()
+    configure_page("📈")
+    load_shared_css()
 
-    data, filtered_data = _load_sales_data()
+    data, _ = _load_sales_data()
     if data.empty:
-        st.error("The active dataset is empty.")
-        st.stop()
+        stop_for_empty_data("The active dataset is empty.")
 
-    issues = validate_dataset(data)
-    if issues:
-        with st.expander("⚠ Dataset Validation"):
-            for issue in issues:
-                st.warning(issue)
+    render_validation_issues(validate_dataset(data))
 
-    filters = _build_filters(data)
-    filtered_data = _apply_filters(data, filters)
+    prepared_data = _prepare_sales_frame(data)
+    filters = _build_filters(prepared_data)
+    filtered_data = _apply_filters(prepared_data, filters)
     st.session_state["sales_filtered"] = filtered_data
 
     if filtered_data.empty:
-        st.warning("No rows match the selected filters. Please broaden the selection.")
-        st.stop()
+        stop_for_empty_filters()
 
     with st.spinner("Preparing sales analytics..."):
+        render_active_scope(filtered_data)
         _render_hero(filtered_data)
         st.markdown("---")
         _render_kpi_cards(filtered_data)
