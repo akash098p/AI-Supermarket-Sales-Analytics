@@ -24,7 +24,7 @@ from utils.analytics import (
 )
 from utils.charts import bar, donut, heatmap, pie, treemap
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
 from utils.preprocessing import preprocess
 
@@ -58,23 +58,11 @@ def _format_number(value: Any) -> str:
 def _load_branch_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load and preprocess the active dataset while preserving session state."""
     uploaded = st.session_state.get("branches_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["branches_data"] = prepared
-        st.session_state["branches_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "branches_data" in st.session_state:
-        data = st.session_state["branches_data"]
-        filtered = st.session_state.get("branches_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["branches_data"] = prepared
-    st.session_state["branches_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "branches",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_branch_frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -233,30 +221,44 @@ def _build_branch_metrics(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     """Prepare summary tables for branch-level analysis."""
     frames: Dict[str, pd.DataFrame] = {}
 
-    if "Branch" in df.columns and "Total" in df.columns:
-        frames["branch_revenue"] = revenue_by(df, "Branch")
-        frames["branch_orders"] = (
-            df.groupby("Branch").size().reset_index(name="Orders")
-        )
-        frames["branch_profit"] = (
-            df.groupby("Branch", as_index=False)["Gross Income"].sum().rename(columns={"Gross Income": "Gross Income"})
-        )
-        frames["branch_rating"] = (
-            df.groupby("Branch", as_index=False)["Rating"].mean().rename(columns={"Rating": "Avg Rating"})
-        )
-        frames["branch_customers"] = (
-            df.groupby("Branch", as_index=False)["Customer ID"].nunique().rename(columns={"Customer ID": "Customers"}) if "Customer ID" in df.columns else pd.DataFrame(columns=["Branch", "Customers"])
-        )
-        frames["branch_quantity"] = (
-            df.groupby("Branch", as_index=False)["Quantity"].sum().rename(columns={"Quantity": "Units Sold"}) if "Quantity" in df.columns else pd.DataFrame(columns=["Branch", "Units Sold"])
-        )
-    else:
-        frames["branch_revenue"] = pd.DataFrame(columns=["Branch", "Total"])
-        frames["branch_orders"] = pd.DataFrame(columns=["Branch", "Orders"])
-        frames["branch_profit"] = pd.DataFrame(columns=["Branch", "Gross Income"])
-        frames["branch_rating"] = pd.DataFrame(columns=["Branch", "Avg Rating"])
-        frames["branch_customers"] = pd.DataFrame(columns=["Branch", "Customers"])
-        frames["branch_quantity"] = pd.DataFrame(columns=["Branch", "Units Sold"])
+    empty_revenue = pd.DataFrame(columns=["Branch", "Total"])
+    empty_orders = pd.DataFrame(columns=["Branch", "Orders"])
+    empty_profit = pd.DataFrame(columns=["Branch", "Gross Income"])
+    empty_rating = pd.DataFrame(columns=["Branch", "Avg Rating"])
+    empty_customers = pd.DataFrame(columns=["Branch", "Customers"])
+    empty_quantity = pd.DataFrame(columns=["Branch", "Units Sold"])
+
+    if "Branch" not in df.columns:
+        frames["branch_revenue"] = empty_revenue
+        frames["branch_orders"] = empty_orders
+        frames["branch_profit"] = empty_profit
+        frames["branch_rating"] = empty_rating
+        frames["branch_customers"] = empty_customers
+        frames["branch_quantity"] = empty_quantity
+        return frames
+
+    frames["branch_revenue"] = revenue_by(df, "Branch") if "Total" in df.columns else empty_revenue
+    frames["branch_orders"] = df.groupby("Branch").size().reset_index(name="Orders")
+    frames["branch_profit"] = (
+        df.groupby("Branch", as_index=False)["Gross Income"].sum().rename(columns={"Gross Income": "Gross Income"})
+        if "Gross Income" in df.columns
+        else empty_profit
+    )
+    frames["branch_rating"] = (
+        df.groupby("Branch", as_index=False)["Rating"].mean().rename(columns={"Rating": "Avg Rating"})
+        if "Rating" in df.columns
+        else empty_rating
+    )
+    frames["branch_customers"] = (
+        df.groupby("Branch", as_index=False)["Customer ID"].nunique().rename(columns={"Customer ID": "Customers"})
+        if "Customer ID" in df.columns
+        else empty_customers
+    )
+    frames["branch_quantity"] = (
+        df.groupby("Branch", as_index=False)["Quantity"].sum().rename(columns={"Quantity": "Units Sold"})
+        if "Quantity" in df.columns
+        else empty_quantity
+    )
 
     return frames
 

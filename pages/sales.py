@@ -13,7 +13,7 @@ import streamlit as st
 from utils.analytics import dashboard_summary
 from utils.charts import bar, line
 from utils.config import PRIMARY, SECONDARY, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.page_helpers import (
     configure_page,
     load_shared_css,
@@ -35,23 +35,11 @@ def _format_currency(value: float) -> str:
 def _load_sales_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load and preprocess the active dataset while keeping session state in sync."""
     uploaded = st.session_state.get("sales_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["sales_data"] = prepared
-        st.session_state["sales_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "sales_data" in st.session_state:
-        data = st.session_state["sales_data"]
-        filtered = st.session_state.get("sales_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["sales_data"] = prepared
-    st.session_state["sales_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "sales",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_sales_frame(df: pd.DataFrame) -> pd.DataFrame:

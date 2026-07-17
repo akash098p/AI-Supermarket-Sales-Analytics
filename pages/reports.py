@@ -24,6 +24,7 @@ from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARN
 from utils.data_loader import (
     dataset_profile,
     get_dataset,
+    load_page_dataset,
     missing_report,
     numeric_summary,
     preview,
@@ -59,23 +60,11 @@ def _format_number(value: Any) -> str:
 def _load_reports_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load dataset with session caching for reports."""
     uploaded = st.session_state.get("reports_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["reports_data"] = prepared
-        st.session_state["reports_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "reports_data" in st.session_state:
-        data = st.session_state["reports_data"]
-        filtered = st.session_state.get("reports_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["reports_data"] = prepared
-    st.session_state["reports_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "reports",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_reports_frame(df: pd.DataFrame) -> pd.DataFrame:

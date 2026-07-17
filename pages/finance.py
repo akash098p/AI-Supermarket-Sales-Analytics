@@ -13,7 +13,7 @@ import streamlit as st
 from utils.analytics import dashboard_summary, gross_income, tax_summary, total_revenue
 from utils.charts import bar, line, waterfall
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
 from utils.preprocessing import preprocess
 
@@ -41,23 +41,11 @@ def _format_ratio(value: float) -> str:
 def _load_finance_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load and preprocess the active dataset while preserving session state."""
     uploaded = st.session_state.get("finance_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["finance_data"] = prepared
-        st.session_state["finance_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "finance_data" in st.session_state:
-        data = st.session_state["finance_data"]
-        filtered = st.session_state.get("finance_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["finance_data"] = prepared
-    st.session_state["finance_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "finance",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_finance_frame(df: pd.DataFrame) -> pd.DataFrame:

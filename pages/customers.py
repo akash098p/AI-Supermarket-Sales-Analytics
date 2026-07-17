@@ -26,7 +26,7 @@ from utils.analytics import (
 )
 from utils.charts import bar, box, bubble, donut, histogram, pie, scatter, violin
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
 from utils.preprocessing import preprocess
 
@@ -60,23 +60,11 @@ def _format_number(value: Any) -> str:
 def _load_customer_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load and preprocess the active dataset while preserving session state."""
     uploaded = st.session_state.get("customers_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["customers_data"] = prepared
-        st.session_state["customers_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "customers_data" in st.session_state:
-        data = st.session_state["customers_data"]
-        filtered = st.session_state.get("customers_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["customers_data"] = prepared
-    st.session_state["customers_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "customers",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_customer_frame(df: pd.DataFrame) -> pd.DataFrame:

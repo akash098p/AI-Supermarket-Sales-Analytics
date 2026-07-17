@@ -24,7 +24,7 @@ from utils.analytics import (
 )
 from utils.charts import bar, donut, heatmap, histogram, pie, treemap
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
 from utils.preprocessing import preprocess
 
@@ -58,23 +58,11 @@ def _format_number(value: Any) -> str:
 def _load_ratings_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load and cache the dataset for the ratings view."""
     uploaded = st.session_state.get("ratings_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["ratings_data"] = prepared
-        st.session_state["ratings_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "ratings_data" in st.session_state:
-        data = st.session_state["ratings_data"]
-        filtered = st.session_state.get("ratings_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["ratings_data"] = prepared
-    st.session_state["ratings_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "ratings",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_ratings_frame(df: pd.DataFrame) -> pd.DataFrame:

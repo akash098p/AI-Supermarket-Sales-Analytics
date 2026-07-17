@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 from utils.analytics import dashboard_summary
 from utils.charts import actual_vs_predicted, bar
 from utils.config import PRIMARY, SECONDARY, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.ml_models import evaluate, prepare_features
 from utils.page_helpers import (
     configure_page,
@@ -38,23 +38,11 @@ def _format_currency(value: float) -> str:
 def _load_prediction_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load dataset with session-state caching."""
     uploaded = st.session_state.get("prediction_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = preprocess(raw_df)
-        st.session_state["prediction_data"] = prepared
-        st.session_state["prediction_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "prediction_data" in st.session_state:
-        data = st.session_state["prediction_data"]
-        filtered = st.session_state.get("prediction_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = preprocess(raw_df)
-    st.session_state["prediction_data"] = prepared
-    st.session_state["prediction_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "prediction",
+        lambda raw_df: preprocess(raw_df),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_prediction_frame(df: pd.DataFrame) -> pd.DataFrame:

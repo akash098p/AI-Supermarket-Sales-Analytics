@@ -22,7 +22,7 @@ from utils.analytics import (
 )
 from utils.charts import bar, donut, histogram, pie, sunburst, treemap
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
-from utils.data_loader import get_dataset, validate_dataset
+from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
 from utils.preprocessing import preprocess
 
@@ -56,23 +56,11 @@ def _format_number(value: Any) -> str:
 def _load_products_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load and preprocess the active dataset while keeping session state in sync."""
     uploaded = st.session_state.get("products_upload")
-    if uploaded is not None:
-        raw_df = get_dataset(uploaded)
-        prepared = _prepare_products_frame(preprocess(raw_df))
-        st.session_state["products_data"] = prepared
-        st.session_state["products_filtered"] = prepared.copy()
-        return prepared, prepared.copy()
-
-    if "products_data" in st.session_state:
-        data = st.session_state["products_data"]
-        filtered = st.session_state.get("products_filtered", data.copy())
-        return data, filtered
-
-    raw_df = get_dataset()
-    prepared = _prepare_products_frame(preprocess(raw_df))
-    st.session_state["products_data"] = prepared
-    st.session_state["products_filtered"] = prepared.copy()
-    return prepared, prepared.copy()
+    return load_page_dataset(
+        "products",
+        lambda raw_df: _prepare_products_frame(preprocess(raw_df)),
+        uploaded_file=uploaded,
+    )
 
 
 def _prepare_products_frame(df: pd.DataFrame) -> pd.DataFrame:
