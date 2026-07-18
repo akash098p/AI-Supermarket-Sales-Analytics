@@ -33,6 +33,72 @@ def load_shared_css(style_path: Path = STYLE_PATH) -> None:
         )
 
 
+def _render_skeleton_line(width: str = "100%", height: int = 14) -> None:
+    st.markdown(
+        f"<div class='skeleton-line' style='width:{width}; height:{height}px;'></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_skeleton_metric(label_width: str = "42%", value_width: str = "58%") -> None:
+    st.markdown(
+        """
+        <div class="skeleton-metric">
+            <div class="skeleton-line" style="width:42%; height:14px;"></div>
+            <div class="skeleton-line" style="width:58%; height:28px; margin-top:0.45rem;"></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_page_skeleton(
+    title: str,
+    subtitle: str,
+    metric_count: int,
+    section_titles: Iterable[str],
+    *,
+    chart_cards: int = 4,
+    table_cards: int = 1,
+    insight_cards: int = 3,
+) -> None:
+    """Render a page-shaped skeleton that mirrors the final dashboard layout."""
+    st.markdown("<div class='skeleton-shell'>", unsafe_allow_html=True)
+
+    st.markdown("<div class='skeleton-hero'>", unsafe_allow_html=True)
+    left, right = st.columns([2.2, 1.0])
+
+    with left:
+        st.markdown("<div class='skeleton-hero-grid'>", unsafe_allow_html=True)
+        st.markdown("<div class='skeleton-hero-left'>", unsafe_allow_html=True)
+        _render_skeleton_line("68%", 22)
+        st.markdown("<div style='height:0.55rem;'></div>", unsafe_allow_html=True)
+        for width in ("92%", "82%", "74%"):
+            _render_skeleton_line(width, 14)
+            st.markdown("<div style='height:0.35rem;'></div>", unsafe_allow_html=True)
+        st.markdown("<div class='skeleton-pill-row'>", unsafe_allow_html=True)
+        for _ in range(3):
+            st.markdown("<div class='skeleton-pill'></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with right:
+        st.markdown("<div class='skeleton-metric-stack'>", unsafe_allow_html=True)
+        for _ in range(metric_count):
+            _render_skeleton_metric()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    for title_text in section_titles:
+        st.markdown(f"<div class='skeleton-section-title'>{title_text}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='skeleton-grid cols-2'>", unsafe_allow_html=True)
+        for _ in range(chart_cards):
+            st.markdown("<div class='skeleton-card'><div class='skeleton-chart tall'></div></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_validation_issues(issues: Iterable[str], title: str = "Dataset Validation") -> None:
     """Display dataset validation messages in a single expandable section."""
     issue_list = [issue for issue in issues if issue]
