@@ -22,6 +22,7 @@ from utils.page_helpers import (
     load_shared_css,
     render_active_scope,
     render_export_buttons,
+    render_page_skeleton,
     render_sidebar_uploader,
     render_validation_issues,
     stop_for_empty_data,
@@ -333,6 +334,17 @@ def render_prediction_page() -> None:
     """Render the complete prediction analytics experience."""
     configure_page("🔮")
     load_shared_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Demand Forecasting Studio",
+            "Train regression models, compare forecast quality, and run what-if transaction scenarios from the active filtered dataset.",
+            metric_count=4,
+            section_titles=["Model Training", "What-if Scenario"],
+            chart_cards=3,
+            table_cards=1,
+            insight_cards=3,
+        )
 
     data, _ = _load_prediction_data()
     if data.empty:
@@ -350,7 +362,7 @@ def render_prediction_page() -> None:
     prepared_df = _prepare_prediction_frame(filtered_data)
     summary = dashboard_summary(prepared_df)
 
-    with st.spinner("Preparing forecast workspace..."):
+    with skeleton.container():
         render_active_scope(prepared_df)
         _render_hero(prepared_df, summary)
         st.markdown("---")
