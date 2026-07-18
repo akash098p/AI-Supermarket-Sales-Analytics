@@ -26,6 +26,7 @@ from utils.charts import bar, donut, heatmap, histogram, pie, treemap
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
 from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
+from utils.page_helpers import render_page_skeleton
 from utils.preprocessing import preprocess
 
 
@@ -398,6 +399,17 @@ def render_ratings_page() -> None:
     """Render the complete ratings analytics experience."""
     st.set_page_config(page_title=APP_NAME, page_icon="⭐", layout="wide", initial_sidebar_state="expanded")
     load_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Customer Ratings & Reputation",
+            "Track satisfaction, product sentiment, branch reputation, and service quality across the supermarket dataset.",
+            metric_count=4,
+            section_titles=["Rating Analytics", "Rating-Linked Revenue"],
+            chart_cards=3,
+            table_cards=1,
+            insight_cards=3,
+        )
 
     data, filtered_data = _load_ratings_data()
     if data.empty:
@@ -420,18 +432,19 @@ def render_ratings_page() -> None:
 
     prepared = _prepare_ratings_frame(filtered_data)
 
-    with st.spinner("Preparing rating intelligence..."):
-        _render_hero(prepared)
-        st.markdown("---")
-        _render_kpi_cards(prepared)
-        st.markdown("---")
-        _render_charts(prepared)
-        st.markdown("---")
-        _render_tables(prepared)
-        st.markdown("---")
-        _render_insights(prepared)
-        st.markdown("---")
-        _render_exports(prepared)
+    with skeleton.container():
+        with st.spinner("Preparing rating intelligence..."):
+            _render_hero(prepared)
+            st.markdown("---")
+            _render_kpi_cards(prepared)
+            st.markdown("---")
+            _render_charts(prepared)
+            st.markdown("---")
+            _render_tables(prepared)
+            st.markdown("---")
+            _render_insights(prepared)
+            st.markdown("---")
+            _render_exports(prepared)
 
 
 render_ratings_page()
