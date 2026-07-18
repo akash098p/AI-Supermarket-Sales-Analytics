@@ -74,7 +74,7 @@ from utils.data_loader import (
 )
 from utils.exports import export_dashboard_package
 from utils.insights import generate_insights
-from utils.page_helpers import render_profile_summary
+from utils.page_helpers import render_page_skeleton, render_profile_summary
 from utils.preprocessing import preprocess
 
 
@@ -657,6 +657,17 @@ def render_dashboard() -> None:
     """Render the full dashboard experience."""
     st.set_page_config(page_title=APP_NAME, page_icon="📊", layout="wide", initial_sidebar_state="expanded")
     load_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "AI-Powered Supermarket Sales Analytics Dashboard",
+            "Executive intelligence layer for branch performance, sales health, customer behavior, and financial outlook.",
+            metric_count=4,
+            section_titles=["Performance Analytics", "Data Health & Segmentation", "Executive Summary"],
+            chart_cards=4,
+            table_cards=2,
+            insight_cards=3,
+        )
     _initialize_dashboard_state()
     _render_sidebar_branding()
 
@@ -679,22 +690,23 @@ def render_dashboard() -> None:
         st.warning("No rows match the selected filters. Please broaden the selection.")
         st.stop()
 
-    with st.spinner("Preparing executive dashboard..."):
-        _render_hero_header(filtered_df)
-        st.markdown("---")
-        _render_kpi_cards(filtered_df)
-        st.markdown("---")
-        _render_dataset_overview(filtered_df)
-        st.markdown("---")
-        _render_exec_summary(filtered_df)
-        st.markdown("---")
-        _render_health_snapshot(filtered_df)
-        st.markdown("---")
-        _render_charts(filtered_df)
-        st.markdown("---")
-        _render_recent_transactions(filtered_df)
-        st.markdown("---")
-        _render_export_section(filtered_df)
+    with skeleton.container():
+        with st.spinner("Preparing executive dashboard..."):
+            _render_hero_header(filtered_df)
+            st.markdown("---")
+            _render_kpi_cards(filtered_df)
+            st.markdown("---")
+            _render_dataset_overview(filtered_df)
+            st.markdown("---")
+            _render_exec_summary(filtered_df)
+            st.markdown("---")
+            _render_health_snapshot(filtered_df)
+            st.markdown("---")
+            _render_charts(filtered_df)
+            st.markdown("---")
+            _render_recent_transactions(filtered_df)
+            st.markdown("---")
+            _render_export_section(filtered_df)
 
 
 render_dashboard()
