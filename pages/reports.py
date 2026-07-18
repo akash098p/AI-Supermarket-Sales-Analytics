@@ -31,6 +31,7 @@ from utils.data_loader import (
     validate_dataset,
 )
 from utils.exports import export_dashboard_package
+from utils.page_helpers import render_page_skeleton
 from utils.preprocessing import preprocess
 
 
@@ -380,6 +381,17 @@ def render_reports_page() -> None:
     """Render the full operational reports experience."""
     st.set_page_config(page_title=APP_NAME, page_icon="📑", layout="wide", initial_sidebar_state="expanded")
     load_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Performance Reports & Diagnostics",
+            "Build operational intelligence reports with performance benchmarks, data quality diagnostics, and export-ready output.",
+            metric_count=4,
+            section_titles=["Performance Charts", "Report Diagnostics"],
+            chart_cards=3,
+            table_cards=2,
+            insight_cards=3,
+        )
 
     data, filtered_data = _load_reports_data()
     if data.empty:
@@ -402,18 +414,19 @@ def render_reports_page() -> None:
 
     prepared = _prepare_reports_frame(filtered_data)
 
-    with st.spinner("Preparing report assets..."):
-        _render_hero(prepared)
-        st.markdown("---")
-        _render_kpi_cards(prepared)
-        st.markdown("---")
-        _render_charts(prepared)
-        st.markdown("---")
-        _render_tables(prepared)
-        st.markdown("---")
-        _render_insights(prepared)
-        st.markdown("---")
-        _render_exports(prepared)
+    with skeleton.container():
+        with st.spinner("Preparing report assets..."):
+            _render_hero(prepared)
+            st.markdown("---")
+            _render_kpi_cards(prepared)
+            st.markdown("---")
+            _render_charts(prepared)
+            st.markdown("---")
+            _render_tables(prepared)
+            st.markdown("---")
+            _render_insights(prepared)
+            st.markdown("---")
+            _render_exports(prepared)
 
 
 render_reports_page()
