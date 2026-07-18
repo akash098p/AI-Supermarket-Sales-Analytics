@@ -15,6 +15,7 @@ from utils.charts import bar, line, waterfall
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
 from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
+from utils.page_helpers import render_page_skeleton
 from utils.preprocessing import preprocess
 
 
@@ -331,6 +332,17 @@ def render_finance_page() -> None:
     """Render the complete finance analytics experience."""
     st.set_page_config(page_title=APP_NAME, page_icon="💹", layout="wide", initial_sidebar_state="expanded")
     load_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Financial Performance Intelligence",
+            "Track revenue generation, gross income, tax burden, and profitability with executive-grade financial analysis.",
+            metric_count=4,
+            section_titles=["Financial Analytics", "Profitability Flow"],
+            chart_cards=3,
+            table_cards=1,
+            insight_cards=3,
+        )
 
     data, filtered_data = _load_finance_data()
     if data.empty:
@@ -351,18 +363,19 @@ def render_finance_page() -> None:
         st.warning("No rows match the selected filters. Please broaden the selection.")
         st.stop()
 
-    with st.spinner("Preparing finance analytics..."):
-        _render_hero(filtered_data)
-        st.markdown("---")
-        _render_kpi_cards(filtered_data)
-        st.markdown("---")
-        _render_charts(filtered_data)
-        st.markdown("---")
-        _render_finance_tables(filtered_data)
-        st.markdown("---")
-        _render_insights(filtered_data)
-        st.markdown("---")
-        _render_exports(filtered_data)
+    with skeleton.container():
+        with st.spinner("Preparing finance analytics..."):
+            _render_hero(filtered_data)
+            st.markdown("---")
+            _render_kpi_cards(filtered_data)
+            st.markdown("---")
+            _render_charts(filtered_data)
+            st.markdown("---")
+            _render_finance_tables(filtered_data)
+            st.markdown("---")
+            _render_insights(filtered_data)
+            st.markdown("---")
+            _render_exports(filtered_data)
 
 
 render_finance_page()
