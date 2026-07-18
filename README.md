@@ -14,7 +14,7 @@ This project turns transactional supermarket data into a multi-page business int
 
 The repository ships with a sample dataset at `data/supermarket_sales.csv`, and each analytics page also supports CSV or Excel uploads directly from the Streamlit sidebar.
 
-# 📹 Live Demo
+## 📹 Live Demo
 
 <p align="center">
   <img src="media/super market.gif" width="100%">
