@@ -26,6 +26,7 @@ from utils.charts import bar, donut, heatmap, pie, treemap
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
 from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
+from utils.page_helpers import render_page_skeleton
 from utils.preprocessing import preprocess
 
 
@@ -390,6 +391,17 @@ def render_branches_page() -> None:
     """Render the complete branch analytics experience."""
     st.set_page_config(page_title=APP_NAME, page_icon="🏬", layout="wide", initial_sidebar_state="expanded")
     load_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Branch Performance Intelligence",
+            "Evaluate branch profitability, customer demand, and outlet excellence with a focused operational view.",
+            metric_count=4,
+            section_titles=["Branch Performance", "Branch Geography & Ranking"],
+            chart_cards=4,
+            table_cards=1,
+            insight_cards=3,
+        )
 
     data, filtered_data = _load_branch_data()
     if data.empty:
@@ -410,18 +422,19 @@ def render_branches_page() -> None:
         st.warning("No rows match the selected filters. Please broaden the selection.")
         st.stop()
 
-    with st.spinner("Preparing branch analytics..."):
-        _render_hero(filtered_data)
-        st.markdown("---")
-        _render_kpi_cards(filtered_data)
-        st.markdown("---")
-        _render_charts(filtered_data)
-        st.markdown("---")
-        _render_branch_tables(filtered_data)
-        st.markdown("---")
-        _render_insights(filtered_data)
-        st.markdown("---")
-        _render_exports(filtered_data)
+    with skeleton.container():
+        with st.spinner("Preparing branch analytics..."):
+            _render_hero(filtered_data)
+            st.markdown("---")
+            _render_kpi_cards(filtered_data)
+            st.markdown("---")
+            _render_charts(filtered_data)
+            st.markdown("---")
+            _render_branch_tables(filtered_data)
+            st.markdown("---")
+            _render_insights(filtered_data)
+            st.markdown("---")
+            _render_exports(filtered_data)
 
 
 render_branches_page()
