@@ -24,6 +24,7 @@ from utils.charts import bar, donut, histogram, pie, sunburst, treemap
 from utils.config import APP_NAME, PRIMARY, SECONDARY, STYLE_PATH, SUCCESS, WARNING
 from utils.data_loader import get_dataset, load_page_dataset, validate_dataset
 from utils.exports import export_dashboard_package
+from utils.page_helpers import render_page_skeleton
 from utils.preprocessing import preprocess
 
 
@@ -426,6 +427,17 @@ def render_products_page() -> None:
     """Render the complete product analytics dashboard."""
     st.set_page_config(page_title=APP_NAME, page_icon="📦", layout="wide", initial_sidebar_state="expanded")
     load_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Product Performance Intelligence",
+            "Analyze product demand, revenue contribution, assortment mix, and category health.",
+            metric_count=4,
+            section_titles=["Product Analytics", "Assortment Intelligence"],
+            chart_cards=4,
+            table_cards=1,
+            insight_cards=3,
+        )
 
     data, filtered_data = _load_products_data()
     if data.empty:
@@ -446,18 +458,19 @@ def render_products_page() -> None:
         st.warning("No rows match the selected filters. Please broaden the selection.")
         st.stop()
 
-    with st.spinner("Preparing product analytics..."):
-        _render_hero(filtered_data)
-        st.markdown("---")
-        _render_kpi_cards(filtered_data)
-        st.markdown("---")
-        _render_charts(filtered_data)
-        st.markdown("---")
-        _render_product_tables(filtered_data)
-        st.markdown("---")
-        _render_insights(filtered_data)
-        st.markdown("---")
-        _render_exports(filtered_data)
+    with skeleton.container():
+        with st.spinner("Preparing product analytics..."):
+            _render_hero(filtered_data)
+            st.markdown("---")
+            _render_kpi_cards(filtered_data)
+            st.markdown("---")
+            _render_charts(filtered_data)
+            st.markdown("---")
+            _render_product_tables(filtered_data)
+            st.markdown("---")
+            _render_insights(filtered_data)
+            st.markdown("---")
+            _render_exports(filtered_data)
 
 
 render_products_page()
