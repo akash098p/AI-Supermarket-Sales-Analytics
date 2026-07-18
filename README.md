@@ -1,10 +1,14 @@
 # AI-Powered Supermarket Sales Analytics Dashboard
 
+<div align="center">
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?style=for-the-badge&logo=pandas)
 ![Plotly](https://img.shields.io/badge/Plotly-Interactive%20Charts-3F4F75?style=for-the-badge&logo=plotly)
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-F7931E?style=for-the-badge&logo=scikitlearn)
+
+<div>
 
 An interactive Streamlit dashboard for exploring supermarket sales performance, customer behavior, product trends, branch performance, financial metrics, and sales forecasting from a single dataset.
 
