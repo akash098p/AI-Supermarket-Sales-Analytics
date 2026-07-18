@@ -19,6 +19,7 @@ from utils.page_helpers import (
     load_shared_css,
     render_active_scope,
     render_export_buttons,
+    render_page_skeleton,
     render_sidebar_uploader,
     render_validation_issues,
     stop_for_empty_data,
@@ -426,6 +427,17 @@ def render_sales_page() -> None:
     """Render the complete sales analytics experience."""
     configure_page("📈")
     load_shared_css()
+    skeleton = st.empty()
+    with skeleton.container():
+        render_page_skeleton(
+            "Sales Performance Intelligence",
+            "Track sales cadence, revenue momentum, seasonality, and trend direction from one filtered workspace.",
+            metric_count=4,
+            section_titles=["Sales Trend Overview", "Momentum and Forecast"],
+            chart_cards=4,
+            table_cards=1,
+            insight_cards=3,
+        )
 
     data, _ = _load_sales_data()
     if data.empty:
@@ -441,7 +453,7 @@ def render_sales_page() -> None:
     if filtered_data.empty:
         stop_for_empty_filters()
 
-    with st.spinner("Preparing sales analytics..."):
+    with skeleton.container():
         render_active_scope(filtered_data)
         _render_hero(filtered_data)
         st.markdown("---")
